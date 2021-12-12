@@ -23,14 +23,15 @@ def connect_device(fw_ip):
     username = config.paloalto['username']
     password = config.paloalto['password']
     try:
-        fw_conn = base.PanDevice.create_from_device(
-            hostname=fw_ip,
-            api_username=username,
-            api_password=password)
+        fw_conn = base.PanDevice.create_from_device(hostname=fw_ip,
+                                                    api_username=username,
+                                                    api_password=password)
         return fw_conn
     except:
-        print('Host was unable to connect to device. Please check '
-              'connectivity to device.\n', file=sys.stderr)
+        print(
+            'Host was unable to connect to device. Please check '
+            'connectivity to device.\n',
+            file=sys.stderr)
         sys.exit(1)
 
 
@@ -56,21 +57,11 @@ def find_active_device():
 
     active_tuple = ('active', 'active-primary')
     if fw1_state in active_tuple:
-        fws_state_dict = assigning_state(
-            fws_state_dict,
-            fw_ip1,
-            fw_ip2,
-            fw1_state,
-            fw2_state
-        )
+        fws_state_dict = assigning_state(fws_state_dict, fw_ip1, fw_ip2,
+                                         fw1_state, fw2_state)
     elif fw2_state in active_tuple:
-        fws_state_dict = assigning_state(
-            fws_state_dict,
-            fw_ip2,
-            fw_ip1,
-            fw2_state,
-            fw1_state
-        )
+        fws_state_dict = assigning_state(fws_state_dict, fw_ip2, fw_ip1,
+                                         fw2_state, fw1_state)
 
     return fws_state_dict
 
@@ -170,15 +161,14 @@ def check_ha_cluster_state(fw_ip1, fw_ip2):
     username = config.paloalto['username']
     password = config.paloalto['password']
 
-    device = base.PanDevice.create_from_device(
-        hostname=fw_ip1,
-        api_username=username,
-        api_password=password)
+    device = base.PanDevice.create_from_device(hostname=fw_ip1,
+                                               api_username=username,
+                                               api_password=password)
 
-    device.set_ha_peers(base.PanDevice.create_from_device(
-        hostname=fw_ip2,
-        api_username=username,
-        api_password=password))
+    device.set_ha_peers(
+        base.PanDevice.create_from_device(hostname=fw_ip2,
+                                          api_username=username,
+                                          api_password=password))
 
     fw_state = device.refresh_ha_active()
     ha_states = ('active', 'passive', 'active-primary', 'active-secondary')
@@ -187,7 +177,8 @@ def check_ha_cluster_state(fw_ip1, fw_ip2):
         return fw_state
 
     print('-- Get firewall HA state healthy before upgrading, because HA '
-          'state is {} for {}.\n'.format(fw_state, fw_ip1), file=sys.stderr)
+          'state is {} for {}.\n'.format(fw_state, fw_ip1),
+          file=sys.stderr)
     sys.exit(1)
 
 
@@ -217,7 +208,8 @@ def check_pending_changes(firewalls_dict):
 
         if fw_conn.pending_changes():
             print('-- Pending changes on {}'.format(hostname))
-            print('-- Please commit changes and restart script.\n', file=sys.stderr)
+            print('-- Please commit changes and restart script.\n',
+                  file=sys.stderr)
             sys.exit(1)
         else:
             print('-- No pending changes on {}'.format(hostname))
@@ -250,7 +242,8 @@ def process_ha_status(results):
     """
     try:
         ha_status = results.find('./result/group/local-info/state').text
-        connection_status = results.find('./result/group/peer-info/conn-status').text
+        connection_status = results.find(
+            './result/group/peer-info/conn-status').text
     except AttributeError:
         ha_status = 'initial'
         connection_status = 'down'
@@ -368,12 +361,8 @@ def firewall_checks(firewalls_dict, tag='na'):
     Returns:
         ha_state_dict (dict): A dictionary containing hostnames and HA states.
     """
-    table = prettytable.PrettyTable(['Hostname',
-                                     'PAN-OS',
-                                     'HA State',
-                                     'HA Connection',
-                                     'Session Count'
-                                     ])
+    table = prettytable.PrettyTable(
+        ['Hostname', 'PAN-OS', 'HA State', 'HA Connection', 'Session Count'])
     ha_state_dict = {}
     for num, hostname in enumerate(firewalls_dict):
         firewall_dict = firewalls_dict.get(hostname)
@@ -395,7 +384,7 @@ def firewall_checks(firewalls_dict, tag='na'):
         ha_state_dict['device' + str(num)] = {
             'hostname': hostname,
             'state': ha_status
-            }
+        }
 
         if tag in ('pre', 'post'):
             print('-- Checking config synchronization')
@@ -406,11 +395,8 @@ def firewall_checks(firewalls_dict, tag='na'):
         print('-- Checking session counts')
         session_results = check_session_count(fw_conn)
         session_count = process_session_count(session_results)
-        table.add_row([hostname,
-                       version,
-                       ha_status,
-                       connection_status,
-                       session_count])
+        table.add_row(
+            [hostname, version, ha_status, connection_status, session_count])
     print('\r')
     print(table)
     return ha_state_dict
@@ -474,9 +460,10 @@ def main():
     post_device1_ha_state = post_ha_state_dict['device1'].get('state')
     post_device2_ha_state = post_ha_state_dict['device2'].get('state')
 
-    if (post_device1_ha_state != pre_device1_ha_state and
-        post_device2_ha_state != pre_device2_ha_state):
-        table = prettytable.PrettyTable(['Hostname', 'HA State', 'HA Connection'])
+    if (post_device1_ha_state != pre_device1_ha_state
+            and post_device2_ha_state != pre_device2_ha_state):
+        table = prettytable.PrettyTable(
+            ['Hostname', 'HA State', 'HA Connection'])
         fw_conn = connect_device(passive_fw_ip)
         print('\nSuspending the active device')
         suspend_ha(fw_conn)
