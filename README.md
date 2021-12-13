@@ -3,6 +3,7 @@ A script to upgrade Palo Alto Networks devices
 
 ![pan_upgrade mind map](pan_upgrade.png "pan_upgrade mind map")
 
+
 ## Built With
 
 [Docker](https://www.docker.com/products/docker-desktop)  
